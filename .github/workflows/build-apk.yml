@@ -38,7 +38,7 @@ jobs:
           export PATH="$ANDROID_SDK_ROOT/cmake/3.22.1/bin:$ANDROID_SDK_ROOT/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
           sed -i 's/\r$//' android/ondevice/build.sh
           mkdir -p "$RUNNER_TEMP/work"
-          sh android/ondevice/build.sh "$RUNNER_TEMP/work"
+          bash android/ondevice/build.sh "$RUNNER_TEMP/work"
 
       - name: Build Launcher APK
         env:

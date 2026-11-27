@@ -42,12 +42,13 @@ jobs:
           mkdir -p "$RUNNER_TEMP/work"
           zsh android/ondevice/build.sh "$RUNNER_TEMP/work" all
 
-          # Auto-locate and compile nxyaz0.c into _nxyaz0.cpython-314-aarch64-linux-android.so
+          # Auto-locate Python.h and nxyaz0.c to compile _nxyaz0.cpython-314-aarch64-linux-android.so
           CC="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang"
-          INC="$RUNNER_TEMP/work/py/include/python3.14"
+          PY_H=$(find "$RUNNER_TEMP/work" -name "Python.h" | head -n 1)
+          INC=$(dirname "$PY_H")
           S="$RUNNER_TEMP/work/stage"
           NXYAZ0_SRC=$(find . -name "nxyaz0.c" | head -n 1)
-          echo "Found nxyaz0.c at: $NXYAZ0_SRC"
+          echo "Using Python headers at: $INC"
           $CC -shared -fPIC -O2 -I"$INC" -I"$S/lib/lz4" -L"$S/lib" -lpython3.14 -Wl,-z,max-page-size=16384 \
             "$NXYAZ0_SRC" \
             -o "$S/python/lib/python3.14/lib-dynload/_nxyaz0.cpython-314-aarch64-linux-android.so"

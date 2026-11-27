@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Apply Dore's PR #890 (Jump Force 60 FPS Android Profile)
+      - name: Apply Dore's PR #890 (Jump Force 60 FPS & UE4.22 Pak Fix)
         run: |
           git checkout -f HEAD
           curl -sL https://github.com -o /tmp/890.patch
@@ -88,7 +88,7 @@ jobs:
           EOF
           fi
 
-      - name: Build Launcher APK (All Valid Games + Dore's Jump Force 60 FPS)
+      - name: Build Launcher APK (All Valid Games in dm/games + Jump Force 60 FPS)
         run: |
           export ANDROID_HOME="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
           export ANDROID_SDK_ROOT="$ANDROID_HOME"
@@ -98,8 +98,8 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > android/app/local.properties
           echo "ndk.dir=$ANDROID_NDK_HOME" >> android/app/local.properties
 
-          # Collect only valid games that have dn/games/<TitleID>/game.tsv
-          ALL_GAMES=$(find dn/games -mindepth 2 -maxdepth 2 -name "game.tsv" | xargs -n1 dirname | xargs -n1 basename | sort -u | paste -sd ',' -)
+          # Collect all valid games from dm/games/<TitleID>/game.tsv
+          ALL_GAMES=$(find dm/games -mindepth 2 -maxdepth 2 -name "game.tsv" | xargs -n1 dirname | xargs -n1 basename | sort -u | paste -sd ',' -)
           echo "Building with valid games: $ALL_GAMES"
 
           sed -i 's/cFlags /cFlags "-g0", "-Os", /g' android/app/build.gradle 2>/dev/null || true

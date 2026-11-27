@@ -42,15 +42,15 @@ jobs:
           mkdir -p "$RUNNER_TEMP/work"
           zsh android/ondevice/build.sh "$RUNNER_TEMP/work" all
 
-          # Compile _nxyaz0 C extension required by build.gradle
+          # Auto-locate and compile nxyaz0.c into _nxyaz0.cpython-314-aarch64-linux-android.so
           CC="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang"
           INC="$RUNNER_TEMP/work/py/include/python3.14"
           S="$RUNNER_TEMP/work/stage"
-          if [ -f peanuts/pack/worker/nxyaz0.c ]; then
-            $CC -shared -fPIC -O2 -I"$INC" -I"$S/lib/lz4" -L"$S/lib" -lpython3.14 -Wl,-z,max-page-size=16384 \
-              peanuts/pack/worker/nxyaz0.c \
-              -o "$S/python/lib/python3.14/lib-dynload/_nxyaz0.cpython-314-aarch64-linux-android.so"
-          fi
+          NXYAZ0_SRC=$(find . -name "nxyaz0.c" | head -n 1)
+          echo "Found nxyaz0.c at: $NXYAZ0_SRC"
+          $CC -shared -fPIC -O2 -I"$INC" -I"$S/lib/lz4" -L"$S/lib" -lpython3.14 -Wl,-z,max-page-size=16384 \
+            "$NXYAZ0_SRC" \
+            -o "$S/python/lib/python3.14/lib-dynload/_nxyaz0.cpython-314-aarch64-linux-android.so"
 
       - name: Use Google Maven Mirror
         run: |

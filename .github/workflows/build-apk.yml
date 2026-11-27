@@ -91,12 +91,11 @@ jobs:
           cd android/app
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
-          ./gradlew --no-daemon --max-workers=2 -PnxPackStage="$RUNNER_TEMP/work/stage" apk
-          find . -name "*.apk"
+          ./gradlew --no-daemon --max-workers=2 -PnxPackStage="$RUNNER_TEMP/work/stage" -PnxGames=0100183010F12000 apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: peanuts-native-jumpforce-apk
-          path: android/app/**/*.apk
+          path: android/app/out/*.apk
           if-no-files-found: error

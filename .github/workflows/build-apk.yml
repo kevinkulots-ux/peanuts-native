@@ -25,6 +25,14 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Cache Gradle & NDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+
       - name: Install NDK 28.2.13676358 & CMake
         run: |
           SDK_DIR="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
@@ -84,10 +92,11 @@ jobs:
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew --no-daemon --max-workers=2 -PnxPackStage="$RUNNER_TEMP/work/stage" apk
+          find . -name "*.apk"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: peanuts-native-jumpforce-apk
-          path: android/app/nxnative/**/*.apk
+          path: android/app/**/*.apk
           if-no-files-found: error

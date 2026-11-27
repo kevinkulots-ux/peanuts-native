@@ -42,6 +42,26 @@ jobs:
           mkdir -p "$RUNNER_TEMP/work"
           zsh android/ondevice/build.sh "$RUNNER_TEMP/work" all
 
+      - name: Configure Gradle Maven Mirror
+        run: |
+          mkdir -p ~/.gradle/init.d
+          cat << 'EOF' > ~/.gradle/init.d/maven-mirror.gradle
+          allprojects {
+            buildscript {
+              repositories {
+                maven { url "https://googleapis.com" }
+                google()
+                mavenCentral()
+              }
+            }
+            repositories {
+              maven { url "https://googleapis.com" }
+              google()
+              mavenCentral()
+            }
+          }
+          EOF
+
       - name: Build Launcher APK
         run: |
           export ANDROID_HOME="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
@@ -54,7 +74,7 @@ jobs:
           cd android/app
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
-          ./gradlew -PnxPackStage="$RUNNER_TEMP/work/stage" apk
+          ./gradlew --no-daemon --max-workers=2 -PnxPackStage="$RUNNER_TEMP/work/stage" apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

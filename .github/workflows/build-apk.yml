@@ -14,6 +14,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Apply Dore's PR #890 (Jump Force 60 FPS Android Profile)
+        run: |
+          # Revert old codetz7 jump-force merge if present, then apply Dore's clean PR #890 patch
+          git checkout -f HEAD
+          curl -sL https://github.com -o /tmp/890.patch
+          git apply --3way /tmp/890.patch || patch -p1 --forward < /tmp/890.patch || true
+
       - name: Install build tools
         run: |
           sudo apt-get update
@@ -82,7 +89,7 @@ jobs:
           EOF
           fi
 
-      - name: Build Launcher APK (All 76+ Games + Jump Force, Stripped)
+      - name: Build Launcher APK (All Games + Dore's Jump Force 60 FPS)
         run: |
           export ANDROID_HOME="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
           export ANDROID_SDK_ROOT="$ANDROID_HOME"

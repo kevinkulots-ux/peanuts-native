@@ -27,27 +27,30 @@ jobs:
 
       - name: Install NDK 28.2.13676358 & CMake
         run: |
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "ndk;28.2.13676358" "cmake;3.22.1" "platforms;android-35" "build-tools;35.0.0"
+          SDK_DIR="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          yes | "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" "ndk;28.2.13676358" "cmake;3.22.1" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Build ondevice stage
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
-          ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/28.2.13676358
         run: |
-          export PATH="$ANDROID_SDK_ROOT/cmake/3.22.1/bin:$ANDROID_SDK_ROOT/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
+          export ANDROID_HOME="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/28.2.13676358"
+          export ANDROID_NDK_ROOT="$ANDROID_NDK_HOME"
+          export PATH="$ANDROID_HOME/cmake/3.22.1/bin:$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
           sed -i 's/\r$//' android/ondevice/build.sh
           mkdir -p "$RUNNER_TEMP/work"
           bash android/ondevice/build.sh "$RUNNER_TEMP/work"
 
       - name: Build Launcher APK
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
-          ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/28.2.13676358
         run: |
-          export PATH="$ANDROID_SDK_ROOT/cmake/3.22.1/bin:$PATH"
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > android/app/local.properties
-          echo "ndk.dir=$ANDROID_SDK_ROOT/ndk/28.2.13676358" >> android/app/local.properties
+          export ANDROID_HOME="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/28.2.13676358"
+          export ANDROID_NDK_ROOT="$ANDROID_NDK_HOME"
+          export PATH="$ANDROID_HOME/cmake/3.22.1/bin:$PATH"
+          echo "sdk.dir=$ANDROID_HOME" > android/app/local.properties
+          echo "ndk.dir=$ANDROID_NDK_HOME" >> android/app/local.properties
           cd android/app
           sed -i 's/\r$//' gradlew
           chmod +x gradlew

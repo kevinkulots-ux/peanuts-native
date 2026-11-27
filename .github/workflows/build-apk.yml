@@ -16,7 +16,6 @@ jobs:
 
       - name: Apply Dore's PR #890 (Jump Force 60 FPS Android Profile)
         run: |
-          # Revert old codetz7 jump-force merge if present, then apply Dore's clean PR #890 patch
           git checkout -f HEAD
           curl -sL https://github.com -o /tmp/890.patch
           git apply --3way /tmp/890.patch || patch -p1 --forward < /tmp/890.patch || true
@@ -89,7 +88,7 @@ jobs:
           EOF
           fi
 
-      - name: Build Launcher APK (All Games + Dore's Jump Force 60 FPS)
+      - name: Build Launcher APK (All Valid Games + Dore's Jump Force 60 FPS)
         run: |
           export ANDROID_HOME="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
           export ANDROID_SDK_ROOT="$ANDROID_HOME"
@@ -99,12 +98,9 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > android/app/local.properties
           echo "ndk.dir=$ANDROID_NDK_HOME" >> android/app/local.properties
 
-          # Collect all supported Base Title IDs (ending in 000) across the repo + Jump Force
-          ALL_GAMES=$(grep -rhoE '0100[0-9A-Fa-f]{9}000' dn/ android/ 2>/dev/null | tr '[:lower:]' '[:upper:]' | sort -u | paste -sd ',' -)
-          if [[ "$ALL_GAMES" != *"0100183010F12000"* ]]; then
-            ALL_GAMES="0100183010F12000,$ALL_GAMES"
-          fi
-          echo "Building with games: $ALL_GAMES"
+          # Collect only valid games that have dn/games/<TitleID>/game.tsv
+          ALL_GAMES=$(find dn/games -mindepth 2 -maxdepth 2 -name "game.tsv" | xargs -n1 dirname | xargs -n1 basename | sort -u | paste -sd ',' -)
+          echo "Building with valid games: $ALL_GAMES"
 
           sed -i 's/cFlags /cFlags "-g0", "-Os", /g' android/app/build.gradle 2>/dev/null || true
 

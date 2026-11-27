@@ -42,25 +42,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/work"
           zsh android/ondevice/build.sh "$RUNNER_TEMP/work" all
 
-      - name: Configure Gradle Maven Mirror
+      - name: Use Google Maven Mirror
         run: |
-          mkdir -p ~/.gradle/init.d
-          cat << 'EOF' > ~/.gradle/init.d/maven-mirror.gradle
-          allprojects {
-            buildscript {
-              repositories {
-                maven { url "https://googleapis.com" }
-                google()
-                mavenCentral()
-              }
-            }
-            repositories {
-              maven { url "https://googleapis.com" }
-              google()
-              mavenCentral()
-            }
-          }
-          EOF
+          find android/app -maxdepth 2 \( -name "settings.gradle*" -o -name "build.gradle*" \) -exec sed -i 's|mavenCentral()|maven { url = uri("https://googleapis.com") }|g' {} +
 
       - name: Build Launcher APK
         run: |

@@ -2448,6 +2448,9 @@ static void upload_(vka_img *im, const tex_t *t, VkCommandBuffer cb, uint64_t *n
                 }
                 static _Atomic int nz; if (zb && atomic_fetch_add(&nz, 1) < 64) VLOG("NaN scan: upload of serial %llu format %#x level %u layer %u: %llu of %llu blocks all zero (storage %p)", (unsigned long long)t->serial, d->format, lv, ly, (unsigned long long)zb, (unsigned long long)nb, (const void *)t->mem);
             }
+            // JUMP FORCE: sanitize invalid zero ASTC blocks.
+            if (is_astc(f->vk))
+                astc_zero_blocks(s.ptr, piece);
             VkBufferImageCopy c = {s.off, bx * f->bw, by * f->bh, {im->aspect, lv, ly, 1}, {0, 0, 0}, {w, h, z}};
             vk.vkCmdCopyBufferToImage(cb, s.buf, im->img, VK_IMAGE_LAYOUT_GENERAL, 1, &c);
             bytes += piece;
@@ -3357,6 +3360,25 @@ static VkSampler sampler_of(const samp_par *p) {
         if (V.minmax) ci.pNext = &red;
         else VRED_ONCE("sampler reduction mode %d not applied: the device has no samplerFilterMinmax", p->reduction);
     } else if (p->reduction) VRED_ONCE("sampler reduction mode %d not applied: not an NVN reduction mode", p->reduction);
+    // JUMP FORCE: diagnostic shadow comparison.
+    if (VKA_ENV("DM_VK_TEST_SHADOW", 0) && ci.compareEnable) {
+        ci.compareOp = VK_COMPARE_OP_ALWAYS;
+    }
+    // JUMP FORCE: diagnostic mip clamp.
+    int test_mip = VKA_ENV("DM_VK_TEST_MIP", 0);
+    if (test_mip > 0 && mip &&
+        !ci.compareEnable && !p->reduction &&
+        p->lod_max > p->lod_min &&
+        ci.maxLod >= (float)test_mip &&
+        ci.minLod < (float)test_mip) {
+        ci.minLod = (float)test_mip;
+        // Preserve automatic mip selection.
+        if (VKA_ENV("DM_VK_TEST_MIP_LOCK", 0))
+            ci.maxLod = (float)test_mip;
+        ci.mipLodBias = 0.0f;
+        ci.anisotropyEnable = VK_FALSE;
+        ci.maxAnisotropy = 1.0f;
+    }
     VkSampler s = VK_NULL_HANDLE;
     if (vk.vkCreateSampler(V.dev, &ci, NULL, &s)) return VK_NULL_HANDLE;
     g_samp = realloc(g_samp, (size_t)(g_nsamp + 1) * sizeof *g_samp); g_samp[g_nsamp++] = (samp_ent){*p, s};

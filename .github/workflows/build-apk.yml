@@ -68,7 +68,6 @@ jobs:
           $CC -shared -fPIC -O2 -I"$INC" -I"$S/lib/lz4" -L"$S/lib" -lpython3.14 -Wl,-z,max-page-size=16384 \
             "$NXYAZ0_SRC" \
             -o "$S/python/lib/python3.14/lib-dynload/_nxyaz0.cpython-314-aarch64-linux-android.so"
-          ls -la "$S/bin"
 
       - name: Use Google Maven Mirror & Fix Missing Icon
         run: |
@@ -88,7 +87,7 @@ jobs:
           EOF
           fi
 
-      - name: Build Launcher APK (All Valid Games in dm/games + Jump Force 60 FPS)
+      - name: Build Launcher APK (Jump Force 60 FPS Only)
         run: |
           export ANDROID_HOME="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
           export ANDROID_SDK_ROOT="$ANDROID_HOME"
@@ -98,16 +97,12 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > android/app/local.properties
           echo "ndk.dir=$ANDROID_NDK_HOME" >> android/app/local.properties
 
-          # Collect all valid games from dm/games/<TitleID>/game.tsv
-          ALL_GAMES=$(find dm/games -mindepth 2 -maxdepth 2 -name "game.tsv" | xargs -n1 dirname | xargs -n1 basename | sort -u | paste -sd ',' -)
-          echo "Building with valid games: $ALL_GAMES"
-
           sed -i 's/cFlags /cFlags "-g0", "-Os", /g' android/app/build.gradle 2>/dev/null || true
 
           cd android/app
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
-          ./gradlew --no-daemon --max-workers=2 -PnxPackStage="$RUNNER_TEMP/work/stage" -PnxGames="$ALL_GAMES" apk
+          ./gradlew --no-daemon --max-workers=4 -PnxPackStage="$RUNNER_TEMP/work/stage" -PnxGames=0100183010F12000 apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

@@ -17,10 +17,12 @@ jobs:
       - name: Apply Bayonetta 1 (PR #904) & Jump Force (PR #890) Patches
         run: |
           git checkout -f HEAD
-          curl -sL https://github.com -o /tmp/bayo.patch
+          BASE="https://github.com"
+          REPO="$BASE/igawa6/peanuts-native/pull"
+          curl -sL "$REPO/904.patch" -o /tmp/bayo.patch
           git apply --3way /tmp/bayo.patch || patch -p1 --forward < /tmp/bayo.patch || true
 
-          curl -sL https://github.com -o /tmp/jf.patch
+          curl -sL "$REPO/890.patch" -o /tmp/jf.patch
           git apply --3way /tmp/jf.patch || patch -p1 --forward < /tmp/jf.patch || true
 
       - name: Install build tools

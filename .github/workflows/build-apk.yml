@@ -14,11 +14,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Apply Dore's PR #890 (Jump Force 60 FPS & UE4.22 Pak Fix)
+      - name: Apply Bayonetta 1 (PR #904) & Jump Force (PR #890) Patches
         run: |
           git checkout -f HEAD
-          curl -sL https://github.com -o /tmp/890.patch
-          git apply --3way /tmp/890.patch || patch -p1 --forward < /tmp/890.patch || true
+          curl -sL https://github.com -o /tmp/bayo.patch
+          git apply --3way /tmp/bayo.patch || patch -p1 --forward < /tmp/bayo.patch || true
+
+          curl -sL https://github.com -o /tmp/jf.patch
+          git apply --3way /tmp/jf.patch || patch -p1 --forward < /tmp/jf.patch || true
 
       - name: Install build tools
         run: |
@@ -58,13 +61,11 @@ jobs:
           zsh android/ondevice/build.sh "$RUNNER_TEMP/work" tools
           zsh android/ondevice/build.sh "$RUNNER_TEMP/work" zbic
 
-          # Auto-locate Python.h and nxyaz0.c to compile _nxyaz0.cpython-314-aarch64-linux-android.so
           CC="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang"
           PY_H=$(find "$RUNNER_TEMP/work" -name "Python.h" | head -n 1)
           INC=$(dirname "$PY_H")
           S="$RUNNER_TEMP/work/stage"
           NXYAZ0_SRC=$(find . -name "nxyaz0.c" | head -n 1)
-          echo "Using Python headers at: $INC"
           $CC -shared -fPIC -O2 -I"$INC" -I"$S/lib/lz4" -L"$S/lib" -lpython3.14 -Wl,-z,max-page-size=16384 \
             "$NXYAZ0_SRC" \
             -o "$S/python/lib/python3.14/lib-dynload/_nxyaz0.cpython-314-aarch64-linux-android.so"
@@ -87,7 +88,7 @@ jobs:
           EOF
           fi
 
-      - name: Build Launcher APK (Jump Force 60 FPS Only)
+      - name: Build Launcher APK (Bayonetta 1 + Jump Force)
         run: |
           export ANDROID_HOME="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
           export ANDROID_SDK_ROOT="$ANDROID_HOME"
@@ -102,11 +103,11 @@ jobs:
           cd android/app
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
-          ./gradlew --no-daemon --max-workers=4 -PnxPackStage="$RUNNER_TEMP/work/stage" -PnxGames=0100183010F12000 apk
+          ./gradlew --no-daemon --max-workers=4 -PnxPackStage="$RUNNER_TEMP/work/stage" -PnxGames=010076F0049A2000,0100183010F12000 apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: peanuts-native-jumpforce-apk
+          name: peanuts-native-bayonetta1-apk
           path: android/app/out/*.apk
           if-no-files-found: error
